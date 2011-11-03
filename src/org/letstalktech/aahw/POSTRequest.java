@@ -57,7 +57,7 @@ public class POSTRequest extends HTTPRequest {
 			MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 			Charset chars = Charset.forName("UTF-8");
 			
-			for (Map.Entry<String, Object> e : parameters[0].getParams().entrySet())
+			for (Map.Entry<String, Object> e : parameters[0].getHeaders().entrySet())
 			{
 				post.addHeader(e.getKey(), e.getValue().toString());
 			}
