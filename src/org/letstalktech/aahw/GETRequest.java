@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
@@ -46,10 +47,8 @@ public class GETRequest extends HTTPRequest {
 			android.util.Log.e("GETRequest",getURL);
 			if(parameters[0].getUserAgent().length() > 0)
 				httpget.getParams().setParameter(CoreProtocolPNames.USER_AGENT, parameters[0].getUserAgent());
-			for (Map.Entry<String, Object> e : parameters[0].getParams().entrySet())
-			{
-				httpget.addHeader(e.getKey(), e.getValue().toString());
-			}
+			
+			setHeaders(parameters[0].getHeaders().entrySet());
 			
 			try {
 				response = httpclient.execute(httpget, localContext);
@@ -57,6 +56,9 @@ public class GETRequest extends HTTPRequest {
 			
 				HttpEntity resEntity = response.getEntity();
 				if(resEntity != null) {
+					for(Header h : response.getAllHeaders()){
+						android.util.Log.v("GETRequest", getURL+h.getValue());
+					}
 					android.util.Log.v("GETRequest", getURL+response.getHeaders("Content-Type")[0].getValue());
 					if(response.getHeaders("Content-Type")[0].getValue().contains("octet")||response.getHeaders("Content-Type")[0].getValue().contains("image")){
 						android.util.Log.e("GETRequest","I'm an image!");
@@ -83,6 +85,7 @@ public class GETRequest extends HTTPRequest {
 						else if(response.getHeaders("Content-Type")[0].getValue().contains("ml")){
 							String content = EntityUtils.toString(resEntity);
 							android.util.Log.v("GETRequest","Content: "+content);
+				//			android.util.Log.v("GETRequest","Encoding: "+resEntity.getContentEncoding().toString());
 							result.setResponse(content);
 						}
 				}

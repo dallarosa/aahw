@@ -2,12 +2,16 @@ package org.letstalktech.aahw;
 
 
 import java.net.URI;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.RedirectHandler;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -22,6 +26,7 @@ public class HTTPRequest extends AsyncTask<Parameters,Object, Result> {
 	protected String serverAddress;
 	protected HttpContext localContext;
 	protected DefaultHttpClient httpclient;
+	protected HttpEntityEnclosingRequestBase request;
 	protected HttpResponse response;
 	protected ResponseHandler<String> responseHandler;
 	protected Callback callback;
@@ -166,6 +171,12 @@ public class HTTPRequest extends AsyncTask<Parameters,Object, Result> {
 //
 //	};
 	
+	public void setHeaders(Set<Entry<String,Object>> headerList){
+		for (Map.Entry<String, Object> e : headerList)
+		{
+			request.addHeader(e.getKey(), e.getValue().toString());
+		}
+	}
 
 	public void setCallback(Callback cb)  {
 		callback = cb;
@@ -236,7 +247,6 @@ public class HTTPRequest extends AsyncTask<Parameters,Object, Result> {
 		return cookieStore;
 	}
 	
-
 
 	
 }

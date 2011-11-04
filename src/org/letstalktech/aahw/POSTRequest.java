@@ -4,8 +4,11 @@ package org.letstalktech.aahw;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.ParseException;
@@ -25,7 +28,7 @@ import org.json.JSONObject;
 import android.graphics.BitmapFactory;
 
 public class POSTRequest extends HTTPRequest {
-	HttpPost post;
+	//HttpPost request;
 	public POSTRequest(CookieStore cookieStore, Callback cb){
 		super(cookieStore,cb);
 	}
@@ -47,37 +50,22 @@ public class POSTRequest extends HTTPRequest {
 		android.util.Log.v("POSTRequest","Entered the POSTRequest");
 		try {
 			String postURL = serverAddress+parameters[0].getPath();
-			post = new HttpPost(postURL); 
+			request = new HttpPost(postURL); 
 			android.util.Log.e("POSTRequest",postURL);
 			
 			if(parameters[0].getUserAgent().length() > 0)
-				post.getParams().setParameter(CoreProtocolPNames.USER_AGENT, parameters[0].getUserAgent());
+				request.getParams().setParameter(CoreProtocolPNames.USER_AGENT, parameters[0].getUserAgent());
 			
 			//List<NameValuePair> params = new ArrayList<NameValuePair>();
-			MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-			Charset chars = Charset.forName("UTF-8");
 			
-			for (Map.Entry<String, Object> e : parameters[0].getHeaders().entrySet())
-			{
-				post.addHeader(e.getKey(), e.getValue().toString());
-			}
+			setHeaders(parameters[0].getHeaders().entrySet());
 			
-			for (Map.Entry<String, Object> e : parameters[0].getParams().entrySet())
-			{
-			//	params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
-				if(e.getValue().getClass().getSimpleName().contentEquals("File"))
-					ent.addPart(e.getKey(),new FileBody((File)e.getValue()));
-				else{
-				StringBody test = new StringBody(e.getValue().toString(),"text/plain",chars);
-				ent.addPart(e.getKey(),test);
-				}
-				
-			}
-
-			//UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params,HTTP.UTF_8);
-			//post.addHeader("Content-Type", "multipart/form-data");
-			post.setEntity(ent);
-			response = httpclient.execute(post,localContext);  
+			MultipartEntity ent = createMultipartEntityFromParameters(
+					parameters[0].getParams().entrySet(),
+					HttpMultipartMode.BROWSER_COMPATIBLE);
+			
+			request.setEntity(ent);
+			response = httpclient.execute(request,localContext);
 
 			result.setStatus(response.getStatusLine().getStatusCode());
 			android.util.Log.v("POSTRequest",String.valueOf(result.getStatus()));
@@ -127,6 +115,28 @@ public class POSTRequest extends HTTPRequest {
 			e.printStackTrace();
 		}
 		return result;
+	}
+	
+	protected MultipartEntity createMultipartEntityFromParameters(Set<Entry<String,Object>> parameterList, HttpMultipartMode mode) throws UnsupportedEncodingException{
+		//MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+		MultipartEntity ent = new MultipartEntity(mode);
+		Charset chars = Charset.forName("UTF-8");
+		for (Map.Entry<String, Object> e : parameterList)
+		{
+		//	params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
+			if(e.getValue().getClass().getSimpleName().contentEquals("File"))
+				ent.addPart(e.getKey(),new FileBody((File)e.getValue()));
+			else{
+			StringBody test = new StringBody(e.getValue().toString(),"text/plain",chars);
+			ent.addPart(e.getKey(),test);
+			}
+			
+		}
+		return ent;
+
+		//UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params,HTTP.UTF_8);
+		//post.addHeader("Content-Type", "multipart/form-data");
+
 	}
 
 //	protected void onPostExecute(Result result){
