@@ -34,6 +34,10 @@ import org.json.JSONObject;
 import android.graphics.BitmapFactory;
 
 public class POSTRequest extends HTTPRequest {
+	
+	private HttpMultipartMode mode;
+	public final static int URL_ENCODED_FORM = 0;
+	public final static int MULTIPART = 1;
 	//HttpPost request;
 	public POSTRequest(CookieStore cookieStore, Callback cb){
 		super(cookieStore,cb);
@@ -59,14 +63,14 @@ public class POSTRequest extends HTTPRequest {
 			request = new HttpPost(postURL); 
 			android.util.Log.e("POSTRequest",postURL);
 			
-			if(parameters[0].getUserAgent().length() > 0)
-				request.getParams().setParameter(CoreProtocolPNames.USER_AGENT, parameters[0].getUserAgent());
-			
+			if(parameters[0].getUserAgent().length() > 0){
+				request.getParams().setParameter(
+						CoreProtocolPNames.USER_AGENT, 
+						parameters[0].getUserAgent());
+			}
 			setHeaders(parameters[0].getHeaders().entrySet());
 			
-			MultipartEntity ent = createMultipartEntityFromParameters(
-					parameters[0].getParams().entrySet(),
-					HttpMultipartMode.BROWSER_COMPATIBLE);
+			MultipartEntity ent = createMultipartEntityFromParameters(parameters[0].getParams().entrySet());
 			
 			request.setEntity(ent);
 			response = httpclient.execute(request,localContext);
@@ -83,8 +87,7 @@ public class POSTRequest extends HTTPRequest {
 						InputStream is = bufHttpEntity.getContent();
 						result.setResponse(BitmapFactory.decodeStream(is));
 					}
-					else
-						if(response.getHeaders("Content-Type")[0].getValue().contains("json")){
+					else if(response.getHeaders("Content-Type")[0].getValue().contains("json")){
 							JSONObject json = null;
 							try {
 								String teste = EntityUtils.toString(resEntity);
@@ -101,11 +104,17 @@ public class POSTRequest extends HTTPRequest {
 							}
 							result.setResponse(json);
 						}
-						else
-							if(response.getHeaders("Content-Type")[0].getValue().contains("text/html")){
+						else if(response.getHeaders("Content-Type")[0].getValue().contains("text/html")){
 								result.setResponse(EntityUtils.toString(resEntity));
 								android.util.Log.e("POSTRequest",(String) result.getResponse());
 							}
+						else {
+							 InputStream contentStream = resEntity.getContent();
+							 byte[] content = null;
+							 contentStream.read(content);
+							 result.setResponse(content);
+						}
+					
 					
 				}catch(NullPointerException e){
 					result.setResponse(new String("null"));
@@ -121,10 +130,12 @@ public class POSTRequest extends HTTPRequest {
 		return result;
 	}
 	
-	protected MultipartEntity createMultipartEntityFromParameters(Set<Entry<String,Object>> parameterList, HttpMultipartMode mode) throws UnsupportedEncodingException{
-		//MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-		MultipartEntity ent = new MultipartEntity(mode);
+	protected MultipartEntity createMultipartEntityFromParameters(Set<Entry<String,Object>> parameterList) throws UnsupportedEncodingException{
+		
+		MultipartEntity ent = new MultipartEntity((mode == null) ? HttpMultipartMode.BROWSER_COMPATIBLE : mode);
+		
 		Charset chars = Charset.forName("UTF-8");
+		
 		for (Map.Entry<String, Object> e : parameterList)
 		{
 		//	params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
@@ -143,7 +154,7 @@ public class POSTRequest extends HTTPRequest {
 
 	}
 
-	protected UrlEncodedFormEntity createUrlEncodedFormEntityFromParameters(Set<Entry<String,Object>> parameterList, HttpMultipartMode mode) throws UnsupportedEncodingException{
+	protected UrlEncodedFormEntity createUrlEncodedFormEntityFromParameters(Set<Entry<String,Object>> parameterList) throws UnsupportedEncodingException{
 		//MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
 		
@@ -156,6 +167,13 @@ public class POSTRequest extends HTTPRequest {
 		return ent;
 		//post.addHeader("Content-Type", "multipart/form-data");
 
+	}
+	
+	public HttpMultipartMode getMode() {
+		return mode;
+	}
+	public void setMode(HttpMultipartMode mode) {
+		this.mode = mode;
 	}
 	
 //	protected void onPostExecute(Result result){
