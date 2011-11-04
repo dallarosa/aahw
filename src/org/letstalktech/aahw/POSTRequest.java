@@ -12,6 +12,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import oauth.signpost.OAuthConsumer;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
@@ -34,10 +39,15 @@ import org.json.JSONObject;
 import android.graphics.BitmapFactory;
 
 public class POSTRequest extends HTTPRequest {
-	
-	private HttpMultipartMode mode;
+
+	//Form content types
 	public final static int URL_ENCODED_FORM = 0;
 	public final static int MULTIPART = 1;
+	
+	private HttpMultipartMode mode;
+	private int formContentType = 0;
+	private OAuthConsumer consumer = null;
+
 	//HttpPost request;
 	public POSTRequest(CookieStore cookieStore, Callback cb){
 		super(cookieStore,cb);
@@ -70,9 +80,18 @@ public class POSTRequest extends HTTPRequest {
 			}
 			setHeaders(parameters[0].getHeaders().entrySet());
 			
-			MultipartEntity ent = createMultipartEntityFromParameters(parameters[0].getParams().entrySet());
+			if(formContentType == MULTIPART){
+				MultipartEntity ent = createMultipartEntityFromParameters(parameters[0].getParams().entrySet());
+				request.setEntity(ent);
+			}
+			else{
+				UrlEncodedFormEntity ent = createUrlEncodedFormEntityFromParameters(parameters[0].getParams().entrySet());
+				request.setEntity(ent);
+				if(consumer != null){
+					consumer.sign(request);
+				}
+			}
 			
-			request.setEntity(ent);
 			response = httpclient.execute(request,localContext);
 
 			result.setStatus(response.getStatusLine().getStatusCode());
@@ -126,6 +145,15 @@ public class POSTRequest extends HTTPRequest {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (OAuthMessageSignerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (OAuthExpectationFailedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (OAuthCommunicationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return result;
 	}
@@ -135,6 +163,7 @@ public class POSTRequest extends HTTPRequest {
 		MultipartEntity ent = new MultipartEntity((mode == null) ? HttpMultipartMode.BROWSER_COMPATIBLE : mode);
 		
 		Charset chars = Charset.forName("UTF-8");
+
 		
 		for (Map.Entry<String, Object> e : parameterList)
 		{
@@ -149,13 +178,9 @@ public class POSTRequest extends HTTPRequest {
 		}
 		return ent;
 
-		//UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params,HTTP.UTF_8);
-		//post.addHeader("Content-Type", "multipart/form-data");
-
 	}
 
 	protected UrlEncodedFormEntity createUrlEncodedFormEntityFromParameters(Set<Entry<String,Object>> parameterList) throws UnsupportedEncodingException{
-		//MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
 		
 		for (Map.Entry<String, Object> e : parameterList)
@@ -165,7 +190,6 @@ public class POSTRequest extends HTTPRequest {
 
 		UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params,HTTP.UTF_8);
 		return ent;
-		//post.addHeader("Content-Type", "multipart/form-data");
 
 	}
 	
@@ -175,10 +199,10 @@ public class POSTRequest extends HTTPRequest {
 	public void setMode(HttpMultipartMode mode) {
 		this.mode = mode;
 	}
-	
-//	protected void onPostExecute(Result result){
-//		android.util.Log.v("POSTRequest",String.valueOf(result.getStatus()));
-//		if(callback != null)
-//			callback.run(result);
-//	}
+	public OAuthConsumer getConsumer() {
+		return consumer;
+	}
+	public void setConsumer(OAuthConsumer consumer) {
+		this.consumer = consumer;
+	}	
 }
