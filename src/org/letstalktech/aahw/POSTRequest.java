@@ -6,21 +6,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,8 +61,6 @@ public class POSTRequest extends HTTPRequest {
 			
 			if(parameters[0].getUserAgent().length() > 0)
 				request.getParams().setParameter(CoreProtocolPNames.USER_AGENT, parameters[0].getUserAgent());
-			
-			//List<NameValuePair> params = new ArrayList<NameValuePair>();
 			
 			setHeaders(parameters[0].getHeaders().entrySet());
 			
@@ -139,6 +143,21 @@ public class POSTRequest extends HTTPRequest {
 
 	}
 
+	protected UrlEncodedFormEntity createUrlEncodedFormEntityFromParameters(Set<Entry<String,Object>> parameterList, HttpMultipartMode mode) throws UnsupportedEncodingException{
+		//MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+		List<NameValuePair> params = new ArrayList<NameValuePair>();
+		
+		for (Map.Entry<String, Object> e : parameterList)
+		{
+			params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
+		}
+
+		UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params,HTTP.UTF_8);
+		return ent;
+		//post.addHeader("Content-Type", "multipart/form-data");
+
+	}
+	
 //	protected void onPostExecute(Result result){
 //		android.util.Log.v("POSTRequest",String.valueOf(result.getStatus()));
 //		if(callback != null)
