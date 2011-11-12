@@ -97,17 +97,9 @@ public class PUTRequest extends HTTPRequest {
 					}
 					else
 						if(response.getHeaders("Content-Type")[0].getValue().contains("json")){
-							JSONObject json = null;
-							try {
-								json=new JSONObject(EntityUtils.toString(resEntity));
-							} catch (ParseException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (JSONException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							result.setResponse(json);
+							String responseString = EntityUtils.toString(resEntity);
+							Object jsonObject  = createJsonObject(responseString);
+							result.setResponse(jsonObject);
 						}
 				} catch (NullPointerException e){
 					//e.printStackTrace();

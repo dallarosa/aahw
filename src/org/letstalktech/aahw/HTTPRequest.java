@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.ProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.RedirectHandler;
@@ -19,8 +20,12 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class HTTPRequest extends AsyncTask<Parameters,Object, Result> { 
 	protected String serverAddress;
@@ -141,35 +146,39 @@ public class HTTPRequest extends AsyncTask<Parameters,Object, Result> {
 		this.errorCallback = errorCallback;
 	}
 	
-//	HttpRequestRetryHandler myRetryHandler = new HttpRequestRetryHandler() {
-//		
-//		public boolean retryRequest(IOException exception, int executionCount,HttpContext context) {
-//	        if (executionCount >= 5) {
-//	            // Do not retry if over max retry count
-//	        	HTTPRequest.this.cancel(true);
-//	            return false;
-//	        }
-//	        if (exception instanceof NoHttpResponseException) {
-//	            // Retry if the server dropped connection on us
-//	            return true;
-//	        }
-//	        if (exception instanceof SSLHandshakeException) {
-//	            // Do not retry on SSL handshake exception
-//	        	HTTPRequest.this.cancel(true);
-//	            return false;
-//	        }
-//	        HttpRequest request = (HttpRequest) context.getAttribute(
-//	                ExecutionContext.HTTP_REQUEST);
-//	        boolean idempotent = !(request instanceof HttpEntityEnclosingRequest); 
-//	        if (idempotent) {
-//	            // Retry if the request is considered idempotent 
-//	            return true;
-//	        }
-//	        HTTPRequest.this.cancel(true);
-//	        return false;
-//	    }
-//
-//	};
+	protected Object createJsonObject(String jsonString){
+	if(jsonString.startsWith("[{")){
+		Log.v("POSTRequest", "is array");
+		JSONArray jsonArray = new JSONArray(); 
+		
+		try {
+			jsonArray = new JSONArray(jsonString);
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return(jsonArray);
+	}
+	else{
+		Log.v("POSTRequest", "is object");
+		JSONObject jsonObject = new JSONObject();
+		try {
+
+			android.util.Log.e("POSTRequest",jsonString);
+
+			jsonObject=new JSONObject(jsonString);
+
+			//								android.util.Log.e("POSTRequest",json.toString());
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return(jsonObject);
+	}
+	}	
 	
 	public void setHeaders(Set<Entry<String,Object>> headerList){
 		for (Map.Entry<String, Object> e : headerList)

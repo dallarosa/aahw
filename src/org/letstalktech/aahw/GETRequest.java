@@ -14,10 +14,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 public class GETRequest extends HTTPRequest {
 
@@ -68,19 +70,9 @@ public class GETRequest extends HTTPRequest {
 					}
 					else
 						if(response.getHeaders("Content-Type")[0].getValue().contains("json")){
-							JSONObject json = null;
-							try {
-								String content = EntityUtils.toString(resEntity);
-								android.util.Log.v("GETRequest",content);
-								json=new JSONObject(content);
-							} catch (ParseException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (JSONException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							result.setResponse(json);
+							String responseString = EntityUtils.toString(resEntity);
+							Object jsonObject  = createJsonObject(responseString);
+							result.setResponse(jsonObject);
 						}
 						else if(response.getHeaders("Content-Type")[0].getValue().contains("ml")){
 							String content = EntityUtils.toString(resEntity);
