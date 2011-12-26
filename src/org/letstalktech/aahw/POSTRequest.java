@@ -2,6 +2,8 @@ package org.letstalktech.aahw;
 
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -19,23 +21,21 @@ import oauth.signpost.exception.OAuthMessageSignerException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
-import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BufferedHttpEntity;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.mime.FormBodyPart;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -45,9 +45,16 @@ public class POSTRequest extends HTTPRequest {
 	//Form content types
 	public final static int URL_ENCODED_FORM = 0;
 	public final static int MULTIPART = 1;
+	public final static int FILE_IN_BODY = 2;
 
 	private HttpMultipartMode mode;
 	private int formContentType = 0;
+	public int getFormContentType() {
+		return formContentType;
+	}
+	public void setFormContentType(int formContentType) {
+		this.formContentType = formContentType;
+	}
 	private OAuthConsumer consumer = null;
 
 	//HttpPost request;
@@ -82,13 +89,28 @@ public class POSTRequest extends HTTPRequest {
 			}
 			setHeaders(parameters[0].getHeaders().entrySet());
 
-			if(formContentType == MULTIPART){
-				MultipartEntity ent = createMultipartEntityFromParameters(parameters[0].getParams().entrySet());
-				request.setEntity(ent);
-			}
-			else{
-				UrlEncodedFormEntity ent = createUrlEncodedFormEntityFromParameters(parameters[0].getParams().entrySet());
-				request.setEntity(ent);
+			switch(formContentType){
+			case MULTIPART:
+				
+				MultipartEntity multipartEnt = createMultipartEntityFromParameters(parameters[0].getParams().entrySet());
+				Log.v("POSTRequest", "I'm multipart");
+				request.setEntity(multipartEnt);
+				if(consumer != null){
+					consumer.sign(request);
+				}
+				break;
+			case URL_ENCODED_FORM:
+				Log.v("POSTRequest", "I'm url encoded");
+				UrlEncodedFormEntity urlEncodedEnt = createUrlEncodedFormEntityFromParameters(parameters[0].getParams().entrySet());
+				request.setEntity(urlEncodedEnt);
+				if(consumer != null){
+					consumer.sign(request);
+				}
+				break;
+			case FILE_IN_BODY:
+				Log.v("POSTRequest", "I'm file in body");
+				FileEntity fileEntity = createFileEntityFromParameters(parameters[0].getParams().entrySet());
+				request.setEntity(fileEntity);
 				if(consumer != null){
 					consumer.sign(request);
 				}
@@ -148,22 +170,31 @@ public class POSTRequest extends HTTPRequest {
 		}
 		return result;
 	}
+	
+	protected FileEntity createFileEntityFromParameters(Set<Entry<String,Object>> parameterList){
+		FileEntity ent = null;
+		for(Map.Entry<String, Object>e : parameterList){
+			ent = new FileEntity((File)e.getValue(), e.getKey());
+		}
+		return(ent);
+	}
 
-	protected MultipartEntity createMultipartEntityFromParameters(Set<Entry<String,Object>> parameterList) throws UnsupportedEncodingException{
+	protected MultipartEntity createMultipartEntityFromParameters(Set<Entry<String,Object>> parameterList) throws UnsupportedEncodingException, FileNotFoundException{
 
 		MultipartEntity ent = new MultipartEntity((mode == null) ? HttpMultipartMode.BROWSER_COMPATIBLE : mode);
-
 		Charset chars = Charset.forName("UTF-8");
-
 
 		for (Map.Entry<String, Object> e : parameterList)
 		{
 			//	params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
-			if(e.getValue().getClass().getSimpleName().contentEquals("File"))
-				ent.addPart(e.getKey(),new FileBody((File)e.getValue()));
+			if(e.getValue().getClass().getSimpleName().contentEquals("File")){
+				//ent.addPart(e.getKey(),new FileBody((File)e.getValue()));
+				 FormBodyPart p2 = new FormBodyPart("userfile",new InputStreamBody(new FileInputStream((File)e.getValue()),"image/jpeg",e.getKey()));
+				 ent.addPart(p2);
+			}
 			else{
-				StringBody test = new StringBody(e.getValue().toString(),"text/plain",chars);
-				ent.addPart(e.getKey(),test);
+				StringBody stringBody = new StringBody(e.getValue().toString(),chars);
+				ent.addPart(e.getKey(),stringBody);
 			}
 
 		}
