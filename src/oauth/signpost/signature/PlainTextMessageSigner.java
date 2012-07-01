@@ -16,8 +16,8 @@ package oauth.signpost.signature;
 
 import oauth.signpost.OAuth;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.http.HttpRequest;
 import oauth.signpost.http.HttpParameters;
+import oauth.signpost.http.HttpRequest;
 
 @SuppressWarnings("serial")
 public class PlainTextMessageSigner extends OAuthMessageSigner {

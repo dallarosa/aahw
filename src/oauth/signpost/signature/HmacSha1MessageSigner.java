@@ -23,8 +23,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import oauth.signpost.OAuth;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.http.HttpRequest;
 import oauth.signpost.http.HttpParameters;
+import oauth.signpost.http.HttpRequest;
 
 @SuppressWarnings("serial")
 public class HmacSha1MessageSigner extends OAuthMessageSigner {

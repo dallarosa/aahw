@@ -3,6 +3,7 @@ package oauth.signpost;
 import oauth.signpost.http.HttpRequest;
 import oauth.signpost.http.HttpResponse;
 
+
 /**
  * Provides hooks into the token request handling procedure executed by
  * {@link OAuthProvider}.

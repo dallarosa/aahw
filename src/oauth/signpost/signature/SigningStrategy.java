@@ -2,8 +2,8 @@ package oauth.signpost.signature;
 
 import java.io.Serializable;
 
-import oauth.signpost.http.HttpRequest;
 import oauth.signpost.http.HttpParameters;
+import oauth.signpost.http.HttpRequest;
 
 /**
  * <p>

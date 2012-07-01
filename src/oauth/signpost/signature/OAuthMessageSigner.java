@@ -18,10 +18,11 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.http.HttpRequest;
 import oauth.signpost.http.HttpParameters;
+import oauth.signpost.http.HttpRequest;
 
 import org.apache.commons.codec.binary.Base64;
+
 
 public abstract class OAuthMessageSigner implements Serializable {
 
